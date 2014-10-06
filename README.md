@@ -1,4 +1,4 @@
-rds-swiss
+rds_swiss
 =========
 
 Dynamically poke holes in EC2-Classic RDS instances' security groups. There are many reasons you would want to keep your AWS RDS DB instances running in an EC2-Classic account, even though they are accessed from within EC2-VPC instances. Several reasons:

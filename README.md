@@ -7,7 +7,7 @@ Dynamically poke holes in EC2-Classic RDS instances' security groups. There are 
 2. As a corrolary, you can therefore easily share DB Snapshots between accounts, such as moving RDS DB Snapshots from Production to Development.
 3. It doesn't cost much extra.
 
-Copyright &copy; 2014 Shlomo Swidler.
+Copyright &copy; 2014, Shlomo Swidler.
 
 Licensed under the Apache 2.0 license.
 

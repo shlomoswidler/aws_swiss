@@ -32,14 +32,18 @@ rds_name = "prod-db"
 aws_access_key = "AKIA....."
 aws_secret_key = "Ssshhhhh."
 db_sec_group   = "db-prod-swiss"
+cidr           = "1.2.3.4/32"
 
 rds_swiss rds_name do
   aws_access_key_id     aws_access_key
   aws_secret_access_key aws_secret_key
   db_security_group     db_sec_group
+  cidr                  cidr
   enable                true          # false to revoke
 end
 ````
+You can omit the `cidr` attribute, in which case the CIDR IP will be the instance's public IP address reported by the AWS Instance Metadata, with a mask of `/32`.
+You can omit the `enable` attribute, whose default value is `true`.
 
 ## Convenience Recipe: poke
 

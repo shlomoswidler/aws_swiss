@@ -28,7 +28,17 @@ This cookbook provides a Definition `rds_swiss` that can be used directly. This 
 Use this definition inside a recipe as follows:
 
 ````
+rds_name = "prod-db"
+aws_access_key = "AKIA....."
+aws_secret_key = "Ssshhhhh."
+db_sec_group   = "db-prod-swiss"
 
+rds_swiss rds_name do
+  aws_access_key_id     aws_access_key
+  aws_secret_access_key aws_secret_key
+  db_security_group     db_sec_group
+  enable                true          # false to revoke
+end
 ````
 
 ## Convenience Recipe: poke
@@ -45,6 +55,7 @@ The convenience recipes `poke` and `plug` require the following configuration:
 
 ````
 "rds_swiss": {
+  "rds_name":              "short-name-of-rds-instance"
   "aws_access_key_id":     "AWS Access Key ID",
   "aws_secret_access_key": "AWS Secret Access Key",
   "db_security_group":     "name-of-the-db-security-group"

@@ -1,13 +1,17 @@
 rds_swiss
 =========
 
-Dynamically poke holes in EC2-Classic RDS instances' security groups. There are many reasons you would want to keep your AWS RDS DB instances running in an EC2-Classic account, even though they are accessed from within EC2-VPC instances. Several reasons:
+Dynamically poke holes in EC2-Classic RDS instances' security groups. 
+
+There are many reasons you would want to keep your AWS RDS DB instances running in an EC2-Classic account, even though they are accessed from within EC2-VPC instances. Several reasons:
 
 1. You can access EC2-Classic RDS DB instances from any other server in the same AWS region. This means you can allow access to the DB instance from multiple AWS accounts.
-2. As a corrolary, you can therefore easily share DB Snapshots between accounts, such as moving RDS DB Snapshots from Production to Development.
+2. As a corollary, you can therefore easily share DB Snapshots between accounts, such as moving RDS DB Snapshots from Production to Development.
 3. It doesn't cost much extra.
 
-The holes poked (and plugged) enable access to a CIDR.
+Typical approaches to building this setup require that each app server use an Elastic IP, in order to pre-authorize and tightly control the DB Security Group ingresses. But Elastic IP addresses are scarce commodities, they cost you money when not in use, and they cannot be used effectively with auto-scaling pools of app servers.
+
+rds_swiss allows you to dynamically authorize and revoke CIDR ingresses in a DB Security Group, which allows you to operate the above kind of setup securely without resorting to Elastic IP addresses.
 
 Copyright &copy; 2014, Shlomo Swidler.
 
@@ -52,4 +56,4 @@ The AWS credentials specified in `[:rds_swiss][:aws_access_key_id]` and `[:rds_s
 *  rds:DescribeDBSecurityGroups
 *  rds:RevokeDBSecurityGroupIngress
 
-For `db_security_group` it is recommended to use a specially designated DB security Group in order to isolate the dynamic authorizations from any others. For example, your RDS DB instance's "main" DB security Group may be named `db-prod` and allow access to your EC2 Security Groups `web` and `jenkins`. Don't use that group in rds_swiss. Instead, your RDS DB instance should also have an additional DB Security Group `db-prod-swiss`, which should be used by rds_swiss. 
+For `db_security_group` it is recommended to use a specially designated DB Security Group in order to isolate the dynamic ingresses from any others. For example, your RDS DB instance's "main" DB Security Group may be named `db-prod` and allow access to your EC2 Security Groups `web` and `jenkins`. Don't use that group in rds_swiss. Instead, your RDS DB instance should also have an additional DB Security Group such as `db-prod-swiss` which should be used by rds_swiss, specified in `[:rds_swiss][:db_security_group]`. 

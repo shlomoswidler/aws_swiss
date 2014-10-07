@@ -59,7 +59,7 @@ The convenience recipes `poke` and `plug` require the following configuration:
 
 ````
 "rds_swiss": {
-  "rds_name":              "short-name-of-rds-instance"
+  "rds_name":              "short-name-of-rds-instance",
   "aws_access_key_id":     "AWS Access Key ID",
   "aws_secret_access_key": "AWS Secret Access Key",
   "db_security_group":     "name-of-the-db-security-group"

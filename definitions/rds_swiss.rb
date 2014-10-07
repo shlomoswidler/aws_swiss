@@ -15,7 +15,7 @@ do
   
   if params[:enable]
     ruby_block "authorize ingress for CIDR #{cidr} on #{rds_name}" do
-      block
+      block do
         region=%x^curl --silent http://169.254.169.254/latest/meta-data/placement/availability-zone/^[0..-2]
         cidr=%x^curl --silent http://169.254.169.254/latest/meta-data/public-ipv4^+"/32" if cidr.nil?
         system("/usr/local/bin/aws --region #{region} rds authorize-db-security-group-ingress --db-security-group-name #{params[:db_security_group]} --cidrip #{cidr}")
@@ -32,7 +32,7 @@ do
     end
   else
      ruby_block "revoke ingress for CIDR #{cidr} on #{rds_name}" do
-      block
+      block do
         region=%x^curl --silent http://169.254.169.254/latest/meta-data/placement/availability-zone/^[0..-2]
         cidr=%x^curl --silent http://169.254.169.254/latest/meta-data/public-ipv4^+"/32" if cidr.nil?
         system("/usr/local/bin/aws --region #{region} rds revoke-db-security-group-ingress --db-security-group-name #{params[:db_security_group]} --cidrip #{cidr}")

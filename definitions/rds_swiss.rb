@@ -18,7 +18,7 @@ do
       block do
         region=%x^curl --silent http://169.254.169.254/latest/meta-data/placement/availability-zone/^[0..-2]
         cidr=%x^curl --silent http://169.254.169.254/latest/meta-data/public-ipv4^+"/32" if cidr.nil?
-        system("/usr/local/bin/aws --region #{region} rds authorize-db-security-group-ingress --db-security-group-name #{params[:db_security_group]} --cidrip #{cidr}")
+        system("AWS_ACCESS_KEY_ID=#{params[:aws_access_key_id]} AWS_SECRET_ACCESS_KEY=#{params[:aws_secret_access_key]} /usr/local/bin/aws --region #{region} rds authorize-db-security-group-ingress --db-security-group-name #{params[:db_security_group]} --cidrip #{cidr}")
       end
       only_if do
         region=%x^curl --silent http://169.254.169.254/latest/meta-data/placement/availability-zone/^[0..-2]
@@ -35,7 +35,7 @@ do
       block do
         region=%x^curl --silent http://169.254.169.254/latest/meta-data/placement/availability-zone/^[0..-2]
         cidr=%x^curl --silent http://169.254.169.254/latest/meta-data/public-ipv4^+"/32" if cidr.nil?
-        system("/usr/local/bin/aws --region #{region} rds revoke-db-security-group-ingress --db-security-group-name #{params[:db_security_group]} --cidrip #{cidr}")
+        system("AWS_ACCESS_KEY_ID=#{params[:aws_access_key_id]} AWS_SECRET_ACCESS_KEY=#{params[:aws_secret_access_key]} /usr/local/bin/aws --region #{region} rds revoke-db-security-group-ingress --db-security-group-name #{params[:db_security_group]} --cidrip #{cidr}")
       end
       only_if do
         region=%x^curl --silent http://169.254.169.254/latest/meta-data/placement/availability-zone/^[0..-2]

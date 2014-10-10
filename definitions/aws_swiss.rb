@@ -45,19 +45,21 @@ do
         end
       end
       only_if do
+        not_already_opened=false
         if port.nil?
           str=%x^AWS_ACCESS_KEY_ID=#{params[:aws_access_key_id]} AWS_SECRET_ACCESS_KEY=#{params[:aws_secret_access_key]} /usr/local/bin/aws --region #{region} rds describe-db-security-groups --db-security-group-name #{security_group}^
           json=JSON.parse(str)
-          json['DBSecurityGroups'].first['IPRanges'].none? { | cidrHash | 
+          not_already_opened = json['DBSecurityGroups'].first['IPRanges'].none? { | cidrHash | 
             cidrHash['CIDRIP'] == cidr && ["authorized", "authorizing"].include?(cidrHash['Status'])
           }
         else
           str=%x^AWS_ACCESS_KEY_ID=#{params[:aws_access_key_id]} AWS_SECRET_ACCESS_KEY=#{params[:aws_secret_access_key]} /usr/local/bin/aws --region #{region} ec2 describe-security-groups --#{group_arg_name}s #{security_group}^
           json=JSON.parse(str)
-          json['SecurityGroups'].first['IpPermissions'].none? { |hole|
+          not_already_opened = json['SecurityGroups'].first['IpPermissions'].none? { |hole|
             hole['ToPort']==port && hole['FromPort']==port && hole['IpProtocol']="tcp" && hole['IpRanges'].any? { |cidrMap| cidrMap['CidrIp']==cidr}
           }
         end
+        not_already_opened
       end
     end
   else
@@ -70,15 +72,17 @@ do
         end
       end
       only_if do
+        not_already_closed=false
         if port.nil?
           str=%x^AWS_ACCESS_KEY_ID=#{params[:aws_access_key_id]} AWS_SECRET_ACCESS_KEY=#{params[:aws_secret_access_key]} /usr/local/bin/aws --region #{region} rds describe-db-security-groups --db-security-group-name #{security_group}^
           json=JSON.parse(str)
-          json['DBSecurityGroups'].first['IPRanges'].any? { | cidrHash | 
+          not_already_closed = json['DBSecurityGroups'].first['IPRanges'].any? { | cidrHash | 
             cidrHash['CIDRIP'] == cidr && ["authorized", "authorizing"].include?(cidrHash['Status'])
           }
         else
-          true #non-existent ingress can be revoked without any error
+          not_already_closed = true # non-existent ingress can be revoked without any error
         end
+        not_already_closed
       end
     end
   end

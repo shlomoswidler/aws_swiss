@@ -57,7 +57,7 @@ do
           str=%x^AWS_ACCESS_KEY_ID=#{params[:aws_access_key_id]} AWS_SECRET_ACCESS_KEY=#{params[:aws_secret_access_key]} /usr/local/bin/aws --region #{region} ec2 describe-security-groups --#{group_arg_name}s #{security_group}^
           json=JSON.parse(str)
           json['SecurityGroups'].first['IpPermissions'].none? { |hole|
-            hole['ToPort']==to_port && hole['FromPort']==from_port && hole['IpProtocol']="tcp" && hole['IpRanges'].any? { |cidrMap| cidrMap['CidrIp']=cidr}
+            hole['ToPort']==port && hole['FromPort']==port && hole['IpProtocol']="tcp" && hole['IpRanges'].any? { |cidrMap| cidrMap['CidrIp']=cidr}
           }
         end
       end

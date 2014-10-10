@@ -36,8 +36,8 @@ do
   require 'json'
   
   if params[:enable] # authorize
-    if port.nil? # EC2 security group
-      ruby_block "authorize EC2 ingress for #{target_name}" do
+    if port.nil? # RDS security group
+      ruby_block "authorize RDS ingress for #{target_name}" do
         block do
           system("AWS_ACCESS_KEY_ID=#{params[:aws_access_key_id]} AWS_SECRET_ACCESS_KEY=#{params[:aws_secret_access_key]} /usr/local/bin/aws --region #{region} rds authorize-db-security-group-ingress --db-security-group-name #{security_group} --cidrip #{cidr}")
         end
@@ -49,7 +49,7 @@ do
           }
         end
       end
-    else # RDS security group
+    else # EC2 security group
       ruby_block "authorize RDS ingress for #{target_name}" do
         block do
           system("AWS_ACCESS_KEY_ID=#{params[:aws_access_key_id]} AWS_SECRET_ACCESS_KEY=#{params[:aws_secret_access_key]} /usr/local/bin/aws --region #{region} ec2 authorize-security-group-ingress --#{group_arg_name} #{security_group} --cidr #{cidr} --protocol tcp --port #{port}")
@@ -64,8 +64,8 @@ do
       end
     end
   else # revoke
-    if port.nil? # EC2 security group
-      ruby_block "revoke EC2 ingress for #{target_name}" do
+    if port.nil? # RDS security group
+      ruby_block "revoke RDS ingress for #{target_name}" do
         block do
           system("AWS_ACCESS_KEY_ID=#{params[:aws_access_key_id]} AWS_SECRET_ACCESS_KEY=#{params[:aws_secret_access_key]} /usr/local/bin/aws --region #{region} rds revoke-db-security-group-ingress --db-security-group-name #{security_group} --cidrip #{cidr}")
         end
@@ -78,7 +78,7 @@ do
         end
       end
     else # RDS security group
-      ruby_block "revoke RDS ingress for #{target_name}" do
+      ruby_block "revoke EC2 ingress for #{target_name}" do
         block do
           system("AWS_ACCESS_KEY_ID=#{params[:aws_access_key_id]} AWS_SECRET_ACCESS_KEY=#{params[:aws_secret_access_key]} /usr/local/bin/aws --region #{region} ec2 revoke-security-group-ingress --#{group_arg_name} #{security_group} --cidr #{cidr} --protocol tcp --port #{port}")
         end

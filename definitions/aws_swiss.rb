@@ -19,7 +19,7 @@ do
   if ports=="all"
     from_port = "1"
     to_port = "65535"
-  else if ports[/([0-9]+)-([0-9]+)/, 1] && ports[/([0-9]+)-([0-9]+)/, 2]
+  elsif ports[/([0-9]+)-([0-9]+)/, 1] && ports[/([0-9]+)-([0-9]+)/, 2]
     from_port = ports[/([0-9]+)-([0-9]+)/, 1]
     to_port = ports[/([0-9]+)-([0-9]+)/, 2]
   end

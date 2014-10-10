@@ -77,7 +77,7 @@ do
           }
         end
       end
-    else # RDS security group
+    else # EC2 security group
       ruby_block "revoke EC2 ingress for #{target_name}" do
         block do
           system("AWS_ACCESS_KEY_ID=#{params[:aws_access_key_id]} AWS_SECRET_ACCESS_KEY=#{params[:aws_secret_access_key]} /usr/local/bin/aws --region #{region} ec2 revoke-security-group-ingress --#{group_arg_name} #{security_group} --cidr #{cidr} --protocol tcp --port #{port}")

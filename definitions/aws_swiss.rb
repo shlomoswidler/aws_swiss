@@ -27,7 +27,7 @@ do
   
   aws_instance_metadata_url = "http://169.254.169.254/latest/meta-data"
   region=%x"curl --silent #{aws_instance_metadata_url}/placement/availability-zone/"[0..-2]
-  cidr=%x"curl --silent #{aws_instance_metadata_url}/public-ipv4"+'/32' if cidr.nil?
+  cidr=%x"curl --silent #{aws_instance_metadata_url}/public-ipv4"+'/32' if cidr.nil? || cidr.size==0
 
   target_name = "CIDR #{cidr}" + (port.nil? ? "" : " port #{port}") + " to " +
     (port.nil? ? "rds instance #{rds_name} " : "") +  "security group #{security_group}"
@@ -35,54 +35,54 @@ do
   include_recipe "awscli"
   require 'json'
   
-  if params[:enable]
-    ruby_block "authorize ingress for #{target_name}" do
-      block do
-        if port.nil?
+  if params[:enable] # authorize
+    if port.nil? # EC2 security group
+      ruby_block "authorize EC2 ingress for #{target_name}" do
+        block do
           system("AWS_ACCESS_KEY_ID=#{params[:aws_access_key_id]} AWS_SECRET_ACCESS_KEY=#{params[:aws_secret_access_key]} /usr/local/bin/aws --region #{region} rds authorize-db-security-group-ingress --db-security-group-name #{security_group} --cidrip #{cidr}")
-        else
-          system("AWS_ACCESS_KEY_ID=#{params[:aws_access_key_id]} AWS_SECRET_ACCESS_KEY=#{params[:aws_secret_access_key]} /usr/local/bin/aws --region #{region} ec2 authorize-security-group-ingress --#{group_arg_name} #{security_group} --cidr #{cidr} --protocol tcp --port #{port}")
         end
-      end
-      only_if do
-        not_already_opened=false
-        if port.nil?
+        only_if do
           str=%x^AWS_ACCESS_KEY_ID=#{params[:aws_access_key_id]} AWS_SECRET_ACCESS_KEY=#{params[:aws_secret_access_key]} /usr/local/bin/aws --region #{region} rds describe-db-security-groups --db-security-group-name #{security_group}^
           json=JSON.parse(str)
-          not_already_opened = json['DBSecurityGroups'].first['IPRanges'].none? { | cidrHash | 
+          json['DBSecurityGroups'].first['IPRanges'].none? { | cidrHash | 
             cidrHash['CIDRIP'] == cidr && ["authorized", "authorizing"].include?(cidrHash['Status'])
           }
-        else
+        end
+      end
+    else # RDS security group
+      ruby_block "authorize RDS ingress for #{target_name}" do
+        block do
+          system("AWS_ACCESS_KEY_ID=#{params[:aws_access_key_id]} AWS_SECRET_ACCESS_KEY=#{params[:aws_secret_access_key]} /usr/local/bin/aws --region #{region} ec2 authorize-security-group-ingress --#{group_arg_name} #{security_group} --cidr #{cidr} --protocol tcp --port #{port}")
+        end
+        only_if do
           str=%x^AWS_ACCESS_KEY_ID=#{params[:aws_access_key_id]} AWS_SECRET_ACCESS_KEY=#{params[:aws_secret_access_key]} /usr/local/bin/aws --region #{region} ec2 describe-security-groups --#{group_arg_name}s #{security_group}^
           json=JSON.parse(str)
-          not_already_opened = json['SecurityGroups'].first['IpPermissions'].none? { |hole|
+          json['SecurityGroups'].first['IpPermissions'].none? { |hole|
             hole['ToPort']==port && hole['FromPort']==port && hole['IpProtocol']="tcp" && hole['IpRanges'].any? { |cidrMap| cidrMap['CidrIp']==cidr}
           }
         end
-        not_already_opened
       end
     end
-  else
-     ruby_block "revoke ingress for #{target_name}" do
-      block do
-        if port.nil?
+  else # revoke
+    if port.nil? # EC2 security group
+      ruby_block "revoke EC2 ingress for #{target_name}" do
+        block do
           system("AWS_ACCESS_KEY_ID=#{params[:aws_access_key_id]} AWS_SECRET_ACCESS_KEY=#{params[:aws_secret_access_key]} /usr/local/bin/aws --region #{region} rds revoke-db-security-group-ingress --db-security-group-name #{security_group} --cidrip #{cidr}")
-        else
-          system("AWS_ACCESS_KEY_ID=#{params[:aws_access_key_id]} AWS_SECRET_ACCESS_KEY=#{params[:aws_secret_access_key]} /usr/local/bin/aws --region #{region} ec2 revoke-security-group-ingress --#{group_arg_name} #{security_group} --cidr #{cidr} --protocol tcp --port #{port}")
         end
-      end
-      only_if do
-        not_already_closed=false
-        if port.nil?
+        only_if do
           str=%x^AWS_ACCESS_KEY_ID=#{params[:aws_access_key_id]} AWS_SECRET_ACCESS_KEY=#{params[:aws_secret_access_key]} /usr/local/bin/aws --region #{region} rds describe-db-security-groups --db-security-group-name #{security_group}^
           json=JSON.parse(str)
-          not_already_closed = json['DBSecurityGroups'].first['IPRanges'].any? { | cidrHash | 
+          json['DBSecurityGroups'].first['IPRanges'].any? { | cidrHash | 
             cidrHash['CIDRIP'] == cidr && ["authorized", "authorizing"].include?(cidrHash['Status'])
           }
-        else
-          not_already_closed = true # non-existent ingress can be revoked without any error
         end
-        not_already_closed
+      end
+    else # RDS security group
+      ruby_block "revoke RDS ingress for #{target_name}" do
+        block do
+          system("AWS_ACCESS_KEY_ID=#{params[:aws_access_key_id]} AWS_SECRET_ACCESS_KEY=#{params[:aws_secret_access_key]} /usr/local/bin/aws --region #{region} ec2 revoke-security-group-ingress --#{group_arg_name} #{security_group} --cidr #{cidr} --protocol tcp --port #{port}")
+        end
+        # non-existent ingress can be revoked without any error, so no only_if guard here
       end
     end
   end

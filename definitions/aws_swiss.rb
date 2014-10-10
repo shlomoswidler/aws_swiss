@@ -26,12 +26,11 @@ do
   end
   
   aws_instance_metadata_url = "http://169.254.169.254/latest/meta-data"
-  region=%x^curl --silent #{aws_instance_metadata_url}/placement/availability-zone/^[0..-2]
-  cidr=%x^curl --silent #{aws_instance_metadata_url}/public-ipv4^+"/32" if cidr.nil?
+  region=%x"curl --silent #{aws_instance_metadata_url}/placement/availability-zone/"[0..-2]
+  cidr=%x"curl --silent #{aws_instance_metadata_url}/public-ipv4"+'/32' if cidr.nil?
 
   target_name = "CIDR #{cidr}" + (port.nil? ? "" : " port #{port}") + " to " +
     (port.nil? ? "rds instance #{rds_name} " : "") +  "security group #{security_group}"
-
 
   include_recipe "awscli"
   require 'json'

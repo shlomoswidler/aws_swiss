@@ -1,47 +1,66 @@
-rds_swiss
+aws_swiss
 =========
 
-Dynamically poke holes in EC2-Classic RDS instances' security groups. 
+Dynamically poke holes in EC2 security groups and RDS DB security groups. 
 
-There are many reasons you would want to keep your AWS RDS DB instances running in an EC2-Classic account, even though they are accessed from within EC2-VPC instances. Several reasons:
+There are many reasons you would want to keep your AWS instances and RDS DB instances running in an EC2-Classic account, even though they are accessed from within EC2-VPC instances. Several reasons:
 
-1. You can access EC2-Classic RDS DB instances from any other server in the same AWS region. This means you can allow access to the DB instance from multiple AWS accounts.
+1. You can access EC2-Classic instances from any other server in the same AWS region. This means you can allow access to the DB instance from multiple AWS accounts.
 2. As a corollary, you can therefore easily share DB Snapshots between accounts, such as moving RDS DB Snapshots from Production to Development.
 3. It doesn't cost much extra.
 
-Typical approaches to building this setup require that each app server use an Elastic IP, in order to pre-authorize and tightly control the DB Security Group ingresses. But Elastic IP addresses are scarce commodities, they cost you money when not in use, and they cannot be used effectively with auto-scaling pools of app servers.
+Typical approaches to building this setup require that each app server use an Elastic IP, in order to pre-authorize and tightly control the Security Group ingresses. But Elastic IP addresses are scarce commodities, they cost you money when not in use, and they cannot be used effectively with auto-scaling pools of app servers.
 
-rds_swiss allows you to dynamically authorize and revoke CIDR ingresses in a DB Security Group, which allows you to operate the above kind of setup securely without resorting to Elastic IP addresses.
+aws_swiss allows you to dynamically authorize and revoke CIDR ingresses in a EC2 or DB Security Group, which allows you to operate the above kind of setup securely without resorting to Elastic IP addresses.
 
 Copyright &copy; 2014, Shlomo Swidler.
 
 Licensed under the Apache 2.0 license.
 
-Issues? https://github.com/shlomoswidler/rds_swiss/issues
+Issues? https://github.com/shlomoswidler/aws_swiss/issues
 
 # Usage
 
-This cookbook provides a Definition `rds_swiss` that can be used directly. This cookbook also provides two convenience recipes, which can be used to poke or plug holes for the current server.
+This cookbook provides two Definition `aws_swiss` that can be used directly. This cookbook also provides two convenience recipes, which can be used to poke or plug holes for the current server.
 
-## Definition: rds_swiss
+## Definition: aws_swiss
 
-Use this definition inside a recipe as follows:
+To poke a hole in an EC2 security group, use this definition as follows: 
 
 ````
-rds_name = "prod-db"
 aws_access_key = "AKIA....."
 aws_secret_key = "Ssshhhhh."
-db_sec_group   = "db-prod-swiss"
+security_group = "prod-db-swiss"
 cidr           = "1.2.3.4/32"
 
-rds_swiss rds_name do
+aws_swiss security_group do
   aws_access_key_id     aws_access_key
   aws_secret_access_key aws_secret_key
-  db_security_group     db_sec_group
+  ports                 3306          # can be a singe number (Integer or String), a range ("8000-8080", as a String), or "all"
+  cidr                  cidr
+  enable                true          # false to revoke
+end
+
+````
+
+To poke a hole in an RDS DB Security Group, specify the `rds_name` attribute and omit the `ports` attribute, as follows:
+
+````
+aws_access_key = "AKIA....."
+aws_secret_key = "Ssshhhhh."
+security_group = "db-prod-swiss"
+cidr           = "1.2.3.4/32"
+
+aws_swiss security_group do
+  aws_access_key_id     aws_access_key
+  aws_secret_access_key aws_secret_key
+  rds_name              "my-rds-instance-name"
   cidr                  cidr
   enable                true          # false to revoke
 end
 ````
+
+The `security_group` designation can be specified either as a security group name (for EC2 Classic security groups, or for security groups in the default VPC) or as a security group ID (for VPC security groups).
 You can omit the `cidr` attribute, in which case the CIDR IP will be the instance's public IP address reported by the AWS Instance Metadata, with a mask of `/32`.
 You can omit the `enable` attribute, whose default value is `true`.
 
@@ -58,17 +77,29 @@ The `plug` recipe revokes the security group ingress for the current server's pu
 The convenience recipes `poke` and `plug` require the following configuration:
 
 ````
-"rds_swiss": {
-  "rds_name":              "short-name-of-rds-instance",
+"aws_swiss": {
   "aws_access_key_id":     "AWS Access Key ID",
   "aws_secret_access_key": "AWS Secret Access Key",
-  "db_security_group":     "name-of-the-db-security-group"
+  "security_group":        "security-group-name-or-ID",
+  "rds_name":              "short-name-of-rds-instance",
+  "ports":                 "3306"
 }
 ````
-The AWS credentials specified in `[:rds_swiss][:aws_access_key_id]` and `[:rds_swiss][:aws_secret_access_key]` must have the following API actions authorized on the account controlling the RDS DB instance:
+**In the above JSON, only specify one of the `ports` or `rds_name` options.**
+The `ports` can be specified as a single port number (`3306`), a port range (`"8000-8080"`), or `"all"`.
 
-*  rds:AuthorizeDBSecurityGroupIngress
-*  rds:DescribeDBSecurityGroups
-*  rds:RevokeDBSecurityGroupIngress
+The AWS credentials specified in `[:rds_swiss][:aws_access_key_id]` and `[:rds_swiss][:aws_secret_access_key]` must have the following API actions authorized on the account controlling the security group:
 
-For `db_security_group` it is recommended to use a specially designated DB Security Group in order to isolate the dynamic ingresses from any others. For example, your RDS DB instance's "main" DB Security Group may be named `db-prod` and allow access to your EC2 Security Groups `web` and `jenkins`. Don't use that group in rds_swiss. Instead, your RDS DB instance should also have an additional DB Security Group such as `db-prod-swiss` which should be used by rds_swiss, specified in `[:rds_swiss][:db_security_group]`. 
+For EC2 Security Groups:
+
+* ec2:AuthorizeSecurityGroupIngress
+* ec2:DescribeSecurityGroups
+* ec2:RevokeSecurityGroupIngress
+
+For RDS DB Security Groups:
+
+* rds:AuthorizeDBSecurityGroupIngress
+* rds:DescribeDBSecurityGroups
+* rds:RevokeDBSecurityGroupIngress
+
+For `security_group` it is recommended to use a specially designated Security Group in order to isolate the dynamic ingresses from any others. For example, your instance's "main" Security Group may be named `db-prod` and allow access to your EC2 Security Groups `web` and `jenkins`. Don't use that group in `aws_swiss`. Instead, your instance should also have an additional Security Group such as `db-prod-swiss` which should be used by `aws_swiss`, specified in `[:aws_swiss][:security_group]`. 

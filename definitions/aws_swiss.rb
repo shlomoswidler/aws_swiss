@@ -14,14 +14,16 @@ do
   
   raise "Illegal use of aws_swiss definition: only one of 'ports' and 'rds_name' must be specified" if rds_name.nil? == ports.nil?
   
-  from_port = ports.to_s
-  to_port = ports.to_s
-  if ports=="all"
-    from_port = "1"
-    to_port = "65535"
-  elsif ports[/([0-9]+)-([0-9]+)/, 1] && ports[/([0-9]+)-([0-9]+)/, 2]
-    from_port = ports[/([0-9]+)-([0-9]+)/, 1]
-    to_port = ports[/([0-9]+)-([0-9]+)/, 2]
+  if !ports.nil?
+    from_port = ports.to_s
+    to_port = ports.to_s
+    if ports=="all"
+      from_port = "1"
+      to_port = "65535"
+    elsif ports[/([0-9]+)-([0-9]+)/, 1] && ports[/([0-9]+)-([0-9]+)/, 2]
+      from_port = ports[/([0-9]+)-([0-9]+)/, 1]
+      to_port = ports[/([0-9]+)-([0-9]+)/, 2]
+    end
   end
   
   is_group_name = security_group[/sg-([0-9a-f]{8})/, 1].nil?

@@ -36,14 +36,14 @@ cidr           = "1.2.3.4/32"
 aws_swiss security_group do
   aws_access_key_id     aws_access_key
   aws_secret_access_key aws_secret_key
-  ports                 3306          # can be a singe number (Integer or String), a range ("8000-8080", as a String), or "all"
+  port                  3306
   cidr                  cidr
   enable                true          # false to revoke
 end
 
 ````
 
-To poke a hole in an RDS DB Security Group, specify the `rds_name` attribute and omit the `ports` attribute, as follows:
+To poke a hole in an RDS DB Security Group, specify the `rds_name` attribute and omit the `port` attribute, as follows:
 
 ````
 aws_access_key = "AKIA....."
@@ -82,11 +82,10 @@ The convenience recipes `poke` and `plug` require the following configuration:
   "aws_secret_access_key": "AWS Secret Access Key",
   "security_group":        "security-group-name-or-ID",
   "rds_name":              "short-name-of-rds-instance",
-  "ports":                 "3306"
+  "port":                  "3306"
 }
 ````
-**In the above JSON, only specify one of the `ports` or `rds_name` options.**
-The `ports` can be specified as a single port number (`3306`), a port range (`"8000-8080"`), or `"all"`.
+**In the above JSON, only specify one of the `port` or `rds_name` options.**
 
 The AWS credentials specified in `[:rds_swiss][:aws_access_key_id]` and `[:rds_swiss][:aws_secret_access_key]` must have the following API actions authorized on the account controlling the security group:
 

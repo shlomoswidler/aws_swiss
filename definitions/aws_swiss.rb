@@ -14,8 +14,8 @@ do
   
   raise "Illegal use of aws_swiss definition: only one of 'ports' and 'rds_name' must be specified" if rds_name.nil? == ports.nil?
   
-  from_port = port.to_s
-  to_port = port.to_s
+  from_port = ports.to_s
+  to_port = ports.to_s
   if ports=="all"
     from_port = "1"
     to_port = "65535"

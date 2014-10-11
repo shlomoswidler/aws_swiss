@@ -64,7 +64,7 @@ do
           str=%x^#{command_base} ec2 describe-security-groups --#{group_arg_name}s #{security_group} --query 'SecurityGroups[0].IpPermissions[*].{FromPort:FromPort, ToPort:ToPort, Protocol:IpProtocol, CIDRs:IpRanges[*].CidrIp}'^
           json=JSON.parse(str)
           json.none? { |hole|
-            hole['ToPort']==port && hole['FromPort']==port && hole['Protocol']="tcp" && hole['CIDRs'].include?(cidr) }
+            hole['ToPort']==port && hole['FromPort']==port && hole['Protocol']="tcp" && hole['CIDRs'].include?(cidr)
           }
         end
       end

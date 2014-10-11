@@ -34,11 +34,11 @@ security_group = "prod-db-swiss"
 cidr           = "1.2.3.4/32"
 
 aws_swiss security_group do
-  aws_access_key_id     aws_access_key
-  aws_secret_access_key aws_secret_key
+  aws_access_key_id     aws_access_key # optional
+  aws_secret_access_key aws_secret_key # optional
   port                  3306
   cidr                  cidr
-  enable                true          # false to revoke
+  enable                true           # false to revoke
 end
 
 ````
@@ -52,17 +52,21 @@ security_group = "db-prod-swiss"
 cidr           = "1.2.3.4/32"
 
 aws_swiss security_group do
-  aws_access_key_id     aws_access_key
-  aws_secret_access_key aws_secret_key
+  aws_access_key_id     aws_access_key # optional
+  aws_secret_access_key aws_secret_key # optional
   rds_name              "my-rds-instance-name"
   cidr                  cidr
-  enable                true          # false to revoke
+  enable                true           # false to revoke
 end
 ````
 
-The `security_group` designation can be specified either as a security group name (for EC2 Classic security groups, or for security groups in the default VPC) or as a security group ID (for VPC security groups).
+The `security_group` designation can be specified either as a security group name (for EC2 Classic security groups, or for security groups in the default VPC) or as a security group ID (for VPC security groups). It is recommended to use a specially designated Security Group in order to isolate the dynamic ingresses from any others. For example, your instance's "main" Security Group may be named `db-prod` and allow access to your EC2 Security Groups `web` and `jenkins`. Don't use that group in `aws_swiss`. Instead, your instance should also have an additional Security Group such as `db-prod-swiss` which should be used by `aws_swiss`, specified in `[:aws_swiss][:security_group]`.
+
 You can omit the `cidr` attribute, in which case the CIDR IP will be the instance's public IP address reported by the AWS Instance Metadata, with a mask of `/32`.
+
 You can omit the `enable` attribute, whose default value is `true`.
+
+You can omit the `aws_access_key_id` and `aws_secret_access_key` attributes, in which case the invocation of the `aws cli` will rely on the instance role's permissions. See below for the exact permissions required.
 
 ## Convenience Recipe: poke
 
@@ -86,8 +90,11 @@ The convenience recipes `poke` and `plug` require the following configuration:
 }
 ````
 **In the above JSON, only specify one of the `port` or `rds_name` options.**
+Also, the `aws_access_key_id` and `aws_secret_access_key` JSON settings are optional.
 
-The AWS credentials specified in `[:rds_swiss][:aws_access_key_id]` and `[:rds_swiss][:aws_secret_access_key]` must have the following API actions authorized on the account controlling the security group:
+## AWS Credentials
+
+The AWS credentials used (either specified by the `aws_access_key_id` and `aws_secret_access_key` attributes or used by the `aws cli` via the instance's role) must have the following API actions authorized on the account controlling the security group:
 
 For EC2 Security Groups:
 
@@ -100,5 +107,3 @@ For RDS DB Security Groups:
 * rds:AuthorizeDBSecurityGroupIngress
 * rds:DescribeDBSecurityGroups
 * rds:RevokeDBSecurityGroupIngress
-
-For `security_group` it is recommended to use a specially designated Security Group in order to isolate the dynamic ingresses from any others. For example, your instance's "main" Security Group may be named `db-prod` and allow access to your EC2 Security Groups `web` and `jenkins`. Don't use that group in `aws_swiss`. Instead, your instance should also have an additional Security Group such as `db-prod-swiss` which should be used by `aws_swiss`, specified in `[:aws_swiss][:security_group]`. 

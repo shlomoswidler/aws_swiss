@@ -56,7 +56,7 @@ do
         end
       end
     else # EC2 security group
-      ruby_block "authorize RDS ingress for #{target_name}" do
+      ruby_block "authorize EC2 ingress for #{target_name}" do
         block do
           system(command_base + "ec2 authorize-security-group-ingress --#{group_arg_name} #{security_group} --cidr #{cidr} --protocol tcp --port #{port}")
         end

@@ -61,10 +61,10 @@ do
           system(command_base + "ec2 authorize-security-group-ingress --#{group_arg_name} #{security_group} --cidr #{cidr} --protocol tcp --port #{port}")
         end
         only_if do
-          str=%x^#{command_base} ec2 describe-security-groups --#{group_arg_name}s #{security_group}^
+          str=%x^#{command_base} ec2 describe-security-groups --#{group_arg_name}s #{security_group} --query 'SecurityGroups[0].IpPermissions[*].{FromPort:FromPort, ToPort:ToPort, Protocol:IpProtocol, CIDRs:IpRanges[*].CidrIp}'^
           json=JSON.parse(str)
-          json['SecurityGroups'].first['IpPermissions'].none? { |hole|
-            hole['ToPort']==port && hole['FromPort']==port && hole['IpProtocol']="tcp" && hole['IpRanges'].any? { |cidrMap| cidrMap['CidrIp']==cidr}
+          json.none? { |hole|
+            hole['ToPort']==port && hole['FromPort']==port && hole['Protocol']="tcp" && hole['CIDRs'].include?(cidr) }
           }
         end
       end

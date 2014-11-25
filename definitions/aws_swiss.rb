@@ -65,7 +65,8 @@ do
             if !shell.exitstatus
               # failed to poke hole.
               if !fallback_group.nil?
-                Chef::Log.info(shell.stderr)
+                Chef::Log.info('STDOUT:' + shell.stdout)
+                Chef::Log.info('STDERR:'+ shell.stderr)
                 Chef::Log.info("There are #{json['DBSecurityGroups'].first['IPRanges'].size} holes in the security group #{security_group}")
                 # try the fallback SG
                 shell = Mixlib::ShellOut.new(command_base + "rds authorize-db-security-group-ingress --db-security-group-name #{fallback_group} --cidrip #{cidr}")
@@ -73,10 +74,15 @@ do
               end
               if !shell.exitstatus
                 # failed to poke hole and fallback not specified or also failed.
-                Chef::Log.fatal(shell.stderr)
+                Chef::Log.info('STDOUT' + shell.stdout)
+                Chef::Log.fatal('STDERR' + shell.stderr)
                 Chef::Log.info("There are #{json['DBSecurityGroups'].first['IPRanges'].size} holes in the security group #{security_group}")
                 false
               end
+            end
+            if shell.exit_status
+              Chef::Log.info(shell.stdout)
+              true
             end
           end
         end

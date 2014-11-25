@@ -81,7 +81,7 @@ do
               end
             end
             if shell.exitstatus
-              Chef::Log.info(shell.stdout)
+              Chef::Log.info(shell.format_for_exception)
               true
             end
           else

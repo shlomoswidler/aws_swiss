@@ -80,10 +80,12 @@ do
                 false
               end
             end
-            if shell.exit_status
+            if shell.exitstatus
               Chef::Log.info(shell.stdout)
               true
             end
+          else
+            Chef::Log.info("RDS ingress for #{target_name} already exists.")
           end
         end
       end

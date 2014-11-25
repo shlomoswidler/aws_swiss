@@ -4,13 +4,15 @@ define :aws_swiss, \
   :cidr => nil, \
   :port => nil, \
   :rds_name => nil, \
-  :enable => true \
+  :enable => true, \
+  :fallback_group => nil \
 do
 
   security_group = params[:name]
   rds_name = params[:rds_name]
   cidr = params[:cidr]
   port = params[:port]
+  fallback_group = params[:fallback_group]
   
   raise "Illegal use of aws_swiss definition: only one of 'port' and 'rds_name' must be specified" if rds_name.nil? == port.nil?
   
@@ -23,6 +25,14 @@ do
     group_arg_name = "group-name"
   else
     group_arg_name = "group-id"
+  end
+  if !fallback_group.nil?
+    fallback_is_group_name = fallback_group[/sg-([0-9a-f]{8})/, 1].nil?
+    if fallback_is_group_name
+      fallback_group_arg_name = "group-name"
+    else
+      fallback_group_arg_name = "group-id"
+    end
   end
   
   aws_instance_metadata_url = "http://169.254.169.254/latest/meta-data"
@@ -45,14 +55,30 @@ do
     if port.nil? # RDS security group
       ruby_block "authorize RDS ingress for #{target_name}" do
         block do
-          system(command_base + "rds authorize-db-security-group-ingress --db-security-group-name #{security_group} --cidrip #{cidr}")
-        end
-        only_if do
           str=%x^#{command_base} rds describe-db-security-groups --db-security-group-name #{security_group}^
           json=JSON.parse(str)
-          json['DBSecurityGroups'].first['IPRanges'].none? { | cidrHash | 
+          if json['DBSecurityGroups'].first['IPRanges'].none? { | cidrHash | 
             cidrHash['CIDRIP'] == cidr && ["authorized", "authorizing"].include?(cidrHash['Status'])
-          }
+            }
+            shell = Mixlib::ShellOut.new(command_base + "rds authorize-db-security-group-ingress --db-security-group-name #{security_group} --cidrip #{cidr}")
+            shell.run_command
+            if !shell.exitstatus
+              # failed to poke hole.
+              if !fallback_group.nil?
+                Chef::Log.info(shell.stderr)
+                Chef::Log.info("There are #{json['DBSecurityGroups'].first['IPRanges'].size} holes in the security group #{security_group}")
+                # try the fallback SG
+                shell = Mixlib::ShellOut.new(command_base + "rds authorize-db-security-group-ingress --db-security-group-name #{fallback_group} --cidrip #{cidr}")
+                shell.run_command
+              end
+              if !shell.exitstatus
+                # failed to poke hole and fallback not specified or also failed.
+                Chef::Log.fatal(shell.stderr)
+                Chef::Log.info("There are #{json['DBSecurityGroups'].first['IPRanges'].size} holes in the security group #{security_group}")
+                false
+              end
+            end
+          end
         end
       end
     else # EC2 security group

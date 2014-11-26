@@ -43,7 +43,7 @@ end
 
 ````
 
-To poke a hole in an RDS DB Security Group, specify the `rds_name` attribute and omit the `port` attribute, as follows:
+To poke a hole in an RDS DB Security Group, omit the `port` attribute, as follows:
 
 ````
 aws_access_key = "AKIA....."
@@ -54,7 +54,6 @@ cidr           = "1.2.3.4/32"
 aws_swiss security_group do
   aws_access_key_id     aws_access_key # optional
   aws_secret_access_key aws_secret_key # optional
-  rds_name              "my-rds-instance-name"
   cidr                  cidr
   enable                true           # false to revoke
   fallback_group        "fallback-security-group"
@@ -88,11 +87,10 @@ The convenience recipes `poke` and `plug` require the following configuration:
   "aws_access_key_id":     "AWS Access Key ID",
   "aws_secret_access_key": "AWS Secret Access Key",
   "security_group":        "security-group-name-or-ID",
-  "rds_name":              "short-name-of-rds-instance",
-  "port":                  "3306"
+  "port":                  "3306"         # only needed for EC2 security groups
 }
 ````
-**In the above JSON, only specify one of the `port` or `rds_name` options.**
+**In the above JSON, only specify the `port` option if the security group is an EC2 security group.**
 Also, the `aws_access_key_id` and `aws_secret_access_key` JSON settings are optional.
 
 ## AWS Credentials

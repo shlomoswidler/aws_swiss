@@ -1,8 +1,7 @@
 module SecurityGroupHoleController
-
-  @unused_module_variable = false
   
-  def self.PRIVATE_detect_rds_hole(command_base, security_group, cidr)
+  # private
+  def self.detect_rds_hole(command_base, security_group, cidr)
     str=%x^#{command_base} rds describe-db-security-groups --db-security-group-name #{security_group}^
     json=JSON.parse(str)
     # the return value - array of [ hole_exists, num_holes ]
@@ -24,14 +23,14 @@ module SecurityGroupHoleController
       shell.run_command
       if shell.exitstatus != 0
         # failed to poke hole.
-        Chef::Log.info('Failed to poke hole in RDS security group #{security_group} for cidr #{cidr}')
+        Chef::Log.info("Failed to poke hole in RDS security group #{security_group} for cidr #{cidr}")
         Chef::Log.info('STDOUT: ' + shell.stdout)
         Chef::Log.info('STDERR: '+ shell.stderr)
         Chef::Log.info("There are #{num_holes} holes in the security group #{security_group}")
         false
       else
         # hole poked successfully
-        Chef::Log.info('Successfully poked hole in RDS security group #{security_group} for cidr #{cidr}')
+        Chef::Log.info("Successfully poked hole in RDS security group #{security_group} for cidr #{cidr}")
         Chef::Log.info("There are now #{num_holes+1} holes in the security group #{security_group}")
         true
       end

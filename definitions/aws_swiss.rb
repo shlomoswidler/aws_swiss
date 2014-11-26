@@ -51,48 +51,18 @@ do
     if port.nil? # RDS security group
       ruby_block "authorize RDS ingress for #{target_name}" do
         block do
-          str=%x^#{command_base} rds describe-db-security-groups --db-security-group-name #{security_group}^
-          json=JSON.parse(str)
-          if json['DBSecurityGroups'].first['IPRanges'].none? { | cidrHash | 
-            cidrHash['CIDRIP'] == cidr && ["authorized", "authorizing"].include?(cidrHash['Status'])
-            }
-            shell = Mixlib::ShellOut.new(command_base + "rds authorize-db-security-group-ingress --db-security-group-name #{security_group} --cidrip #{cidr}")
-            shell.run_command
-            succeeded = false
-            if shell.exitstatus != 0
-              # failed to poke hole.
-              if !fallback_group.nil?
-                Chef::Log.info('STDOUT: ' + shell.stdout)
-                Chef::Log.info('STDERR: '+ shell.stderr)
-                Chef::Log.info("There are #{json['DBSecurityGroups'].first['IPRanges'].size} holes in the security group #{security_group}")
-                # try the fallback SG
-                str=%x^#{command_base} rds describe-db-security-groups --db-security-group-name #{fallback_group}^
-                json=JSON.parse(str)
-                if json['DBSecurityGroups'].first['IPRanges'].none? { | cidrHash | 
-                  cidrHash['CIDRIP'] == cidr && ["authorized", "authorizing"].include?(cidrHash['Status'])
-                  }
-                  shell = Mixlib::ShellOut.new(command_base + "rds authorize-db-security-group-ingress --db-security-group-name #{fallback_group} --cidrip #{cidr}")
-                  shell.run_command
-                else
-                  Chef::Log.info("Fallback security group #{fallback_group} already contains ingress for CIDR #{cidr}")
-                  succeeded = true
-                end
-              else
-                Chef::Log.info('No fallback_group set')
+          if !SecurityGroupHoleController.open_rds_hole_if_necessary(security_group, cidr, region, params[:aws_access_key_id], params[:aws_secret_access_key])
+            # failed to poke hole in specified security group
+            if !fallback_group.nil?
+              Chef::Log.info("Trying to poke hole in fallback security group #{fallback_group}")
+              if !SecurityGroupHoleController.open_rds_hole_if_necessary(fallback_group, cidr, region, params[:aws_access_key_id], params[:aws_secret_access_key])
+                # failed fallback also
+                raise "Failed to poke hole in fallback security group #{fallback_group}"
               end
-              if shell.exitstatus != 0 || succeeded
-                # failed to poke hole and fallback not specified or also failed.
-                Chef::Log.info('STDOUT: ' + shell.stdout)
-                Chef::Log.fatal('STDERR: ' + shell.stderr)
-                Chef::Log.info("There are #{json['DBSecurityGroups'].first['IPRanges'].size} holes in the security group #{security_group}")
-                raise "Failed to authorize RDS ingress for #{target_name}"
-              end
+            else
+              # no fallback security group
+              raise "Failed to poke hole in RDS security group #{security_group} and no fallback group specified"
             end
-            if shell.exitstatus == 0
-              Chef::Log.info(shell.stdout) if shell.stdout.length > 0
-            end
-          else
-            Chef::Log.info("RDS ingress for #{target_name} already exists.")
           end
         end
       end

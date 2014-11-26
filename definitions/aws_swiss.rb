@@ -3,18 +3,14 @@ define :aws_swiss, \
   :aws_secret_access_key => nil, \
   :cidr => nil, \
   :port => nil, \
-  :rds_name => nil, \
   :enable => true, \
   :fallback_group => nil \
 do
 
   security_group = params[:name]
-  rds_name = params[:rds_name]
   cidr = params[:cidr]
   port = params[:port]
-  fallback_group = params[:fallback_group]
-  
-  raise "Illegal use of aws_swiss definition: only one of 'port' and 'rds_name' must be specified" if rds_name.nil? == port.nil?
+  fallback_group = params[:fallback_group]rd
   
   if !port.nil?
     port = port.to_s
@@ -46,7 +42,7 @@ do
   command_base << "/usr/local/bin/aws --region #{region} "
 
   target_name = "CIDR #{cidr}" + (port.nil? ? "" : " port #{port}") + " to " +
-    (port.nil? ? "rds instance #{rds_name} " : "") +  "security group #{security_group}"
+    (port.nil? ? "RDS DB " : "") +  "security group #{security_group}"
 
   include_recipe "awscli"
   require 'json'

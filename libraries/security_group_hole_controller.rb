@@ -45,4 +45,30 @@ module SecurityGroupHoleController
       true
     end
   end
+  
+  def self.close_rds_hole_if_necessary(security_group, cidr, region, aws_access_key_id, aws_secret_access_key)
+    hole_exists, num_holes = detect_rds_hole(security_group, cidr, region, aws_access_key_id, aws_secret_access_key)
+    if hole_exists
+      command_base = awscli_command_stem(region, aws_access_key_id, aws_secret_access_key)
+      shell = Mixlib::ShellOut.new(command_base + "rds revoke-db-security-group-ingress --db-security-group-name #{security_group} --cidrip #{cidr}")
+      shell.run_command
+      if shell.exitstatus != 0
+        # failed to plug hole
+        Chef::Log.info("Failed to plug hole in RDS security group #{security_group} for cidr #{cidr}")
+        Chef::Log.info('STDOUT: ' + shell.stdout)
+        Chef::Log.info('STDERR: '+ shell.stderr)
+        Chef::Log.info("There are #{num_holes} holes in the security group #{security_group}")
+        false
+      else
+        # plugged hole
+        Chef::Log.info("Successfully plugged hole in RDS security group #{security_group} for cidr #{cidr}")
+        Chef::Log.info("There are now #{num_holes-1} holes in the security group #{security_group}")
+        true
+      end
+    else
+      # no hole in this security group
+      Chef::Log.info("Hole in RDS security group #{security_group} for cidr #{cidr} is not present among #{num_holes} holes")
+      true
+    end
+  end
 end

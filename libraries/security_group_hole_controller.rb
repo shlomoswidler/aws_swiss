@@ -1,6 +1,5 @@
 module SecurityGroupHoleController
   
-  # private
   def self.awscli_command_stem(region, aws_access_key_id, aws_secret_access_key)
     command_base = ""
     if !aws_access_key_id.nil? && !aws_secret_access_key.nil?

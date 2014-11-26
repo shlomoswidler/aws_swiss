@@ -10,7 +10,7 @@ do
   security_group = params[:name]
   cidr = params[:cidr]
   port = params[:port]
-  fallback_group = params[:fallback_group]rd
+  fallback_group = params[:fallback_group]
   
   if !port.nil?
     port = port.to_s

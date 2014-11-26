@@ -12,6 +12,7 @@ module SecurityGroupHoleController
   
   # private
   def self.detect_rds_hole(security_group, cidr, region, aws_access_key_id, aws_secret_access_key)
+    command_base = awscli_command_stem(region, aws_access_key_id, aws_secret_access_key)
     str=%x^#{command_base} rds describe-db-security-groups --db-security-group-name #{security_group}^
     json=JSON.parse(str)
     # the return value - array of [ hole_exists, num_holes ]
@@ -21,7 +22,6 @@ module SecurityGroupHoleController
   end
   
   def self.open_rds_hole_if_necessary(security_group, cidr, region, aws_access_key_id, aws_secret_access_key)
-    
     hole_exists, num_holes = detect_rds_hole(security_group, cidr, region, aws_access_key_id, aws_secret_access_key)
     if !hole_exists
       command_base = awscli_command_stem(region, aws_access_key_id, aws_secret_access_key)

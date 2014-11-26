@@ -57,10 +57,13 @@ aws_swiss security_group do
   rds_name              "my-rds-instance-name"
   cidr                  cidr
   enable                true           # false to revoke
+  fallback_group        "fallback-security-group"
 end
 ````
 
 The `security_group` designation can be specified either as a security group name (for EC2 Classic security groups, or for security groups in the default VPC) or as a security group ID (for VPC security groups). It is recommended to use a specially designated Security Group in order to isolate the dynamic ingresses from any others. For example, your instance's "main" Security Group may be named `db-prod` and allow access to your EC2 Security Groups `web` and `jenkins`. Don't use that group in `aws_swiss`. Instead, your instance should also have an additional Security Group such as `db-prod-swiss` which should be used by `aws_swiss`, specified in `[:aws_swiss][:security_group]`.
+
+The `fallback_group` will be used for RDS secrity groups when the primary `security_group` fails to add the ingress. This can happen when the security group has reached the limit of allowed authorizations (currently a measly 20).
 
 You can omit the `cidr` attribute, in which case the CIDR IP will be the instance's public IP address reported by the AWS Instance Metadata, with a mask of `/32`.
 

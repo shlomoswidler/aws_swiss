@@ -5,10 +5,10 @@ module SecurityGroupHoleController
   def self.PRIVATE_detect_rds_hole(command_base, security_group, cidr)
     str=%x^#{command_base} rds describe-db-security-groups --db-security-group-name #{security_group}^
     json=JSON.parse(str)
-    # the return value
-    [ json['DBSecurityGroups'].first['IPRanges'].size, 
-      json['DBSecurityGroups'].first['IPRanges'].any? { | cidrHash | 
-      cidrHash['CIDRIP'] == cidr && ["authorized", "authorizing"].include?(cidrHash['Status']) } ]
+    # the return value - array of [ hole_exists, num_holes ]
+    [ json['DBSecurityGroups'].first['IPRanges'].any? { | cidrHash | 
+      cidrHash['CIDRIP'] == cidr && ["authorized", "authorizing"].include?(cidrHash['Status']) },
+      json['DBSecurityGroups'].first['IPRanges'].size ]
   end
   
   def self.open_rds_hole_if_necessary(security_group, cidr, region, aws_access_key_id, aws_secret_access_key)

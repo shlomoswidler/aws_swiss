@@ -69,8 +69,16 @@ do
                 Chef::Log.info('STDERR: '+ shell.stderr)
                 Chef::Log.info("There are #{json['DBSecurityGroups'].first['IPRanges'].size} holes in the security group #{security_group}")
                 # try the fallback SG
-                shell = Mixlib::ShellOut.new(command_base + "rds authorize-db-security-group-ingress --db-security-group-name #{fallback_group} --cidrip #{cidr}")
-                shell.run_command
+                str=%x^#{command_base} rds describe-db-security-groups --db-security-group-name #{fallback_group}^
+                json=JSON.parse(str)
+                if json['DBSecurityGroups'].first['IPRanges'].none? { | cidrHash | 
+                  cidrHash['CIDRIP'] == cidr && ["authorized", "authorizing"].include?(cidrHash['Status'])
+                  }
+                  shell = Mixlib::ShellOut.new(command_base + "rds authorize-db-security-group-ingress --db-security-group-name #{fallback_group} --cidrip #{cidr}")
+                  shell.run_command
+                else
+                  Chef::Log.info("Fallback security group #{fallback_group} already contains ingress for CIDR #{cidr}")
+                end
               else
                 Chef::Log.info('No fallback_group set')
               end

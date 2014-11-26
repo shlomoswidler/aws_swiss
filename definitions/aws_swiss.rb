@@ -62,7 +62,7 @@ do
             }
             shell = Mixlib::ShellOut.new(command_base + "rds authorize-db-security-group-ingress --db-security-group-name #{security_group} --cidrip #{cidr}")
             shell.run_command
-            if !shell.exitstatus
+            if shell.exitstatus != 0
               # failed to poke hole.
               if !fallback_group.nil?
                 Chef::Log.info('STDOUT:' + shell.stdout)
@@ -71,8 +71,10 @@ do
                 # try the fallback SG
                 shell = Mixlib::ShellOut.new(command_base + "rds authorize-db-security-group-ingress --db-security-group-name #{fallback_group} --cidrip #{cidr}")
                 shell.run_command
+              else
+                Chef::Log.info('No fallback_group set')
               end
-              if !shell.exitstatus
+              if shell.exitstatus != 0
                 # failed to poke hole and fallback not specified or also failed.
                 Chef::Log.info('STDOUT' + shell.stdout)
                 Chef::Log.fatal('STDERR' + shell.stderr)
@@ -80,8 +82,8 @@ do
                 false
               end
             end
-            if shell.exitstatus
-              Chef::Log.info(shell.format_for_exception)
+            if shell.exitstatus == 0
+              Chef::Log.info(shell.stdout)
               true
             end
           else

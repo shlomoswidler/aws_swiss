@@ -9,6 +9,10 @@ module SecurityGroupHoleController
     command_base
   end
   
+  def self.get_awscli_argument_for_security_group(security_group)
+    security_group[/sg-([0-9a-f]{8})/, 1].nil? ? "group-name" : "group-id"
+  end
+  
   # private
   def self.detect_rds_hole(security_group, cidr, region, aws_access_key_id, aws_secret_access_key)
     command_base = awscli_command_stem(region, aws_access_key_id, aws_secret_access_key)

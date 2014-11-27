@@ -49,13 +49,14 @@ To poke a hole in an RDS DB Security Group, specify the `rds_name` attribute and
 aws_access_key = "AKIA....."
 aws_secret_key = "Ssshhhhh."
 security_group = "db-prod-swiss"
+fallback_group = "db-prod-swiss-fallback"
 cidr           = "1.2.3.4/32"
 
 aws_swiss security_group do
   aws_access_key_id     aws_access_key # optional
   aws_secret_access_key aws_secret_key # optional
-  rds_name              "my-rds-instance-name"
   cidr                  cidr
+  fallback_group        fallback_group # optional
   enable                true           # false to revoke
 end
 ````
@@ -63,6 +64,8 @@ end
 The `security_group` designation can be specified either as a security group name (for EC2 Classic security groups, or for security groups in the default VPC) or as a security group ID (for VPC security groups). It is recommended to use a specially designated Security Group in order to isolate the dynamic ingresses from any others. For example, your instance's "main" Security Group may be named `db-prod` and allow access to your EC2 Security Groups `web` and `jenkins`. Don't use that group in `aws_swiss`. Instead, your instance should also have an additional Security Group such as `db-prod-swiss` which should be used by `aws_swiss`, specified in `[:aws_swiss][:security_group]`.
 
 You can omit the `cidr` attribute, in which case the CIDR IP will be the instance's public IP address reported by the AWS Instance Metadata, with a mask of `/32`.
+
+The `fallback_group` attribute is optional. It is supported only for RDS DB security groups (that is, when no `port` attribute is specified). Because only 20 ingresses can be authorized for an RDS DB security group, this option allows another DB security group to be used if the main one is already "full". If specified,  `aws_swiss` will poke or plug the hole in the `security_group` security group, and if that fails the `fallback_group` will be used.
 
 You can omit the `enable` attribute, whose default value is `true`.
 
@@ -85,11 +88,11 @@ The convenience recipes `poke` and `plug` require the following configuration:
   "aws_access_key_id":     "AWS Access Key ID",
   "aws_secret_access_key": "AWS Secret Access Key",
   "security_group":        "security-group-name-or-ID",
-  "rds_name":              "short-name-of-rds-instance",
-  "port":                  "3306"
+  "port":                  "3306",
+  "fallback_group":        "db-security-group-for-fallback"
 }
 ````
-**In the above JSON, only specify one of the `port` or `rds_name` options.**
+**In the above JSON, only specify one of the `port` or `fallback_group` options.**
 Also, the `aws_access_key_id` and `aws_secret_access_key` JSON settings are optional.
 
 ## AWS Credentials

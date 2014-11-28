@@ -26,8 +26,10 @@ do
       missing_holes, more_confirmed_holes = cidr_list.partition {|cidr| !holes.include?(cidr) }
       
       # TODO: plug extra_holes (may require moving functionality into the library module)
+      Chef::Log.info("Extra holes: #{extra_holes.join(',')}")
       
       # TODO: poke missing_holes (likewise)
+      Chef::Log.info("Missing holes: #{missing_holes.join(',')}")
       
     end
   end

@@ -1,4 +1,4 @@
-unless node[:aws_swiss][:port].nil?
+if node[:aws_swiss][:port].nil?
 
   this_layers_cidrs = node[:opsworks][:layers][ node[:opsworks][:instance][:layers].first ][:instances].reduce([]) { |result, instance|
     result << (instance.values.first[:ip] + "/32")

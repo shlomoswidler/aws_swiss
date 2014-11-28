@@ -99,4 +99,19 @@ module SecurityGroupHoleController
     end
   end
   
+  def self.close_rds_hole_with_fallback(security_group, fallback_group, cidr, region, aws_access_key_id, aws_secret_access_key)
+    plugged = close_rds_hole_if_necessary(security_group, cidr, region, aws_access_key_id, aws_secret_access_key)
+    if plugged
+      # hole is not present in specified security group. Make sure it's not in the fallback group either.
+      if !fallback_group.nil?
+        Chef::Log.info("Plugging hole in fallback security group #{fallback_group}")
+        plugged = close_rds_hole_if_necessary(fallback_group, cidr, region, params[:aws_access_key_id], params[:aws_secret_access_key])
+      end
+    end
+    if !plugged
+      # failed to plug hole
+      raise "Failed to plug hole in RDS security group #{security_group} fallback group #{fallback_group}"
+    end
+  end
+  
 end

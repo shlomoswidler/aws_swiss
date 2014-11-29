@@ -1,8 +1,9 @@
 if node[:aws_swiss][:port].nil?
-  puts "instances are: #{node[:opsworks][:layers][ node[:opsworks][:instance][:layers].first ][:instances].inspect}"
   
-  this_layers_cidrs = node[:opsworks][:layers][ node[:opsworks][:instance][:layers].first ][:instances].reduce([]) { |result, instance|
-    result << (instance.values.first[:ip] + "/32")
+  this_layer = node[:opsworks][:instance][:layers].first
+  puts "first instance is: #{node[:opsworks][:layers][this_layer][:instances].values.first.inspect}"
+  this_layers_cidrs = node[:opsworks][:layers][this_layer][:instances].values.reduce([]) { |result, instance|
+    result << (instance[:ip] + "/32")
     result
   }
   

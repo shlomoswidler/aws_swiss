@@ -87,6 +87,8 @@ end
 
 The `cidr_list` attribute should be an Array of String CIDRs, e.g. `[ "1.2.3.4/32", "9.8.0.0/16" ]`.
 
+The `fallback_group` attribute is optional.
+
 You can omit the `aws_access_key_id` and `aws_secret_access_key` attributes, in which case the invocation of the `aws cli` will rely on the instance role's permissions. See below for the exact permissions required.
 
 ## Convenience Recipe: poke

@@ -20,6 +20,7 @@ if node[:aws_swiss][:port].nil?
     aws_secret_access_key node[:aws_swiss][:aws_secret_access_key]
     region                node[:opsworks][:instance][:region]
     cidr_list             this_stacks_cidrs
-    security_group_list   [ node[:aws_swiss][:security_group], node[:aws_swiss][:fallback_group] ]
+    security_group        node[:aws_swiss][:security_group]
+    fallback_group        node[:aws_swiss][:fallback_group]
   end
 end

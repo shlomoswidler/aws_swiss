@@ -1,7 +1,6 @@
 if node[:aws_swiss][:port].nil?
   
-  # CHANGE TO USE ALL INSTANCES IN THIS STACK
-  # node[:opsworks][:layers][layer-shortname][:instances][instance-shortname][:elastic_ip] OR [:ip]
+  # get cidrs for all instances in this OpsWorks Stack
   this_stacks_cidrs = []
   node[:opsworks][:layers].each { | layer_shortname, layer_desc|
     layer_desc[:instances].values.each{ |instance|

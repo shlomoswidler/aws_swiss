@@ -18,7 +18,7 @@ do
   ruby_block "enforce rds security group holes for security groups #{security_group_list.join(',')}" do
     block do
       holes = security_group_list.reduce([]) {|result, group|
-        result << SecurityGroupHoleController.get_rds_cidr_holes(group, params[:region], params[:aws_access_key_id], params[:aws_secret_access_key])
+        result = result + SecurityGroupHoleController.get_rds_cidr_holes(group, params[:region], params[:aws_access_key_id], params[:aws_secret_access_key])
         result
       }
   

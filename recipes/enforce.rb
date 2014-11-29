@@ -1,5 +1,6 @@
 if node[:aws_swiss][:port].nil?
-
+  Chef::Log.debug("instances are: #{node[:opsworks][:layers][ node[:opsworks][:instance][:layers].first ][:instances].inspect}")
+  
   this_layers_cidrs = node[:opsworks][:layers][ node[:opsworks][:instance][:layers].first ][:instances].reduce([]) { |result, instance|
     result << (instance.values.first[:ip] + "/32")
     result

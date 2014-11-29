@@ -7,7 +7,7 @@ if node[:aws_swiss][:port].nil?
     result
   }
   
-  Chef::Log.info("cidrs in this layer: #{this_layers_cidrs.join(',')}")
+  Chef::Log.info("#{this_layers_cidrs.size} cidrs in this layer: #{this_layers_cidrs.sort.join(',')}")
 
   swiss_rds_enforcer do
     aws_access_key_id     node[:aws_swiss][:aws_access_key_id]
